@@ -1,0 +1,94 @@
+"""
+DEBUT
+
+    Créer un plateau de 9 cases vides
+
+    Afficher un message de bienvenue
+    Demander au joueur de choisir le mode :
+        1 = deux joueurs
+        2 = joueur contre ordinateur
+
+    Définir que le joueur X commence
+    La partie n'est pas terminée
+
+    TANT QUE la partie n'est pas finie
+
+        Afficher le plateau
+
+        SI mode = 1 ALORS
+            Le joueur courant joue
+            Demander une position
+
+        SINON
+            SI joueur courant = X ALORS
+                Le joueur joue
+                Demander une position
+            SINON
+                L'ordinateur choisit une position
+        FIN SI
+
+        Vérifier si la position est valide
+        SI invalide → redemander
+
+        Mettre le symbole du joueur dans la case choisie
+
+        SI le joueur courant gagne ALORS
+            Afficher le plateau
+            Afficher "Victoire"
+            Terminer la partie
+
+        SINON SI le plateau est plein ALORS
+            Afficher le plateau
+            Afficher "Match nul"
+            Terminer la partie
+
+        SINON
+            Changer de joueur (X par O)
+        FIN SI
+
+    FIN TANT QUE
+
+    Afficher "Fin du jeu"
+
+FIN
+
+Variable condtion de victoire
+
+Fonction grille 3x3
+    Afficher ligne "-"
+    Afficher | case 0 | case 1 | case 2 |
+    Afficher | case 3 | case 4 | case 5 |
+    Afficher | case 6 | case 7 | case 8 |
+    Afficher ligne "-"
+
+Fonction position
+    TANT QUE Vrai
+        Essaie de lire un nombre entier
+            si nombre entier
+            alors retourne le nombre
+        Si erreur 
+            afficher Entrer le nombre
+    FIN TANT QUE
+
+Fonction gagnant
+    POUR chaque ligne gagnante dans WIN_LINES
+        récuperer les 3 position i, j ,k
+        SI ligne, colonne, diagonale = signe
+            return True
+    FIN POUR
+    return false
+
+Fonction plateau plein
+    POUR chaque cellule dans board
+        SI cellule = vide
+            return False
+    FIN POUR
+    return True
+
+Fonction 1ère cas vide
+    POUR tout i dans la range de 0-8
+        SI board[i] = vide
+            return i
+    FIN POUR
+    return -1
+"""
