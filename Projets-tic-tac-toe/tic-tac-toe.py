@@ -24,6 +24,7 @@ STYLES = {
         "font_info_size": 24,
         "grid_margin": 30
     },
+
     "retro": {
         "name": "Rétro",
         "background": (15, 15, 15),
@@ -41,23 +42,7 @@ STYLES = {
         "font_info_size": 20,
         "grid_margin": 25
     },
-    "minimalist": {
-        "name": "Minimaliste",
-        "background": (240, 240, 245),
-        "grid": (180, 180, 190),
-        "x": (40, 40, 40),
-        "o": (120, 120, 130),
-        "line_width": 3,
-        "button_bg": (230, 230, 235),
-        "button_hover": (210, 210, 220),
-        "button_border": (160, 160, 170),
-        "message": (80, 80, 90),
-        "font_main": "segoe ui",
-        "font_main_size": 80,
-        "font_info": "segoe ui",
-        "font_info_size": 22,
-        "grid_margin": 30
-    },
+    
     "dark": {
         "name": "Dark Futuriste",
         "background": (8, 10, 25),
