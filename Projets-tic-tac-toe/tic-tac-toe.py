@@ -318,7 +318,7 @@ def draw_button(rect, text, highlighted=False):
     Screen.blit(label, label_rect)
 
 
-#   ANIMATIONS DE FIN
+#   ANIMATIONS DE FIN (traversent l'écran)
 
 def draw_end_animation(result_type):
     """
@@ -335,7 +335,6 @@ def draw_end_animation(result_type):
                 x = random.randint(-20, Width)
                 beam_width = random.randint(25, 45)
                 color = random.choice([Line_color, Message_color])
-                # rectangle qui couvre toute la hauteur
                 pygame.draw.rect(Screen, color, (x, 0, beam_width, Height), width=1)
         else:  # match nul
             # Faisceaux diagonaux du haut jusqu'en bas
@@ -360,10 +359,10 @@ def draw_end_animation(result_type):
                 y = random.randint(0, Height)
                 pygame.draw.line(Screen, Line_color, (0, y), (Width, y), 1)
 
-    # Thème dark : lasers et cercles qui couvrent toute la fenêtre
+    # Thème dark : lasers et cercles
     elif SELECTED_THEME == "dark":
         if result_type == "win":
-            # Lasers partant du bas de la fenêtre jusqu'en haut
+            # Lasers partant du bas jusqu'en haut
             for _ in range(6):
                 x1 = random.randint(0, Width)
                 y1 = Height
@@ -378,7 +377,6 @@ def draw_end_animation(result_type):
             for r in range(10, max_radius, 20):
                 color = random.choice([Line_color, O_color, X_color])
                 pygame.draw.circle(Screen, color, center, r, 1)
-
 
 
 #   MENU
@@ -524,6 +522,10 @@ def loop_pygame(board, mode):
     # boutons en haut
     btn_replay = pygame.Rect(30, 5, 110, 30)
     btn_menu = pygame.Rect(160, 5, 110, 30)
+    btn_undo = pygame.Rect(95, 40, 110, 25)  # nouveau bouton annuler
+
+    # historique des coups (position, joueur)
+    history = []
 
     # état pour l'animation de fin
     result_type = None  # "win" ou "draw"
@@ -532,12 +534,14 @@ def loop_pygame(board, mode):
     while running:
         Clock.tick(60)
 
-        # IA
+        # IA joue automatiquement
         if not game_over and mode == 2 and current_player == "O":
             pygame.time.delay(350)
             pos = computer(board, current_player)
             if pos is not False and board[pos] == " ":
+                history.append((pos, current_player))  # on sauvegarde le coup de l'IA
                 board[pos] = current_player
+
                 if is_winner(board, current_player):
                     message = f"JOUEUR {current_player} A GAGNÉ !!!"
                     game_over = True
@@ -553,24 +557,49 @@ def loop_pygame(board, mode):
         mouse_pos = pygame.mouse.get_pos()
         hover_replay = btn_replay.collidepoint(mouse_pos)
         hover_menu = btn_menu.collidepoint(mouse_pos)
+        hover_undo = btn_undo.collidepoint(mouse_pos)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
                 return None
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if game_over:
-                    mx, my = event.pos
-                    if btn_replay.collidepoint(mx, my):
-                        return "REPLAY"
-                    if btn_menu.collidepoint(mx, my):
-                        return "MENU"
+                mx, my = event.pos
 
+                # Bouton MENU toujours actif
+                if btn_menu.collidepoint(mx, my):
+                    return "MENU"
+
+                # Bouton REJOUER toujours actif
+                if btn_replay.collidepoint(mx, my):
+                    return "REPLAY"
+
+                # Bouton ANNULER COUP
+                if btn_undo.collidepoint(mx, my):
+                    if history:
+                        last_pos, last_player = history.pop()
+                        board[last_pos] = " "
+                        # en 2 joueurs : on redonne la main à celui qui vient d'être annulé
+                        # en mode IA : on redonne toujours la main au joueur X (humain)
+                        if mode == 2:
+                            current_player = "X"
+                            message = "Tour du joueur X"
+                        else:
+                            current_player = last_player
+                            message = f"Tour du joueur {current_player}"
+
+                        # si on annule après une victoire / match nul, on annule aussi la fin
+                        game_over = False
+                        result_type = None
+                        animation_counter = 0
+                    continue
+
+                # Clic sur la grille (uniquement si la partie n'est pas finie)
                 if not game_over:
                     if mode == 1 or current_player == "X":
-                        index = mouse_click(event.pos)
+                        index = mouse_click((mx, my))
                         if index is not None and board[index] == " ":
+                            history.append((index, current_player))  # on enregistre le coup
                             board[index] = current_player
 
                             if is_winner(board, current_player):
@@ -592,16 +621,17 @@ def loop_pygame(board, mode):
         # affichage de la grille + message
         display_board(board, message)
 
-        # animation de fin (en continu tant qu'on n'a pas cliqué)
+        # animation de fin (en continu tant qu'on n'a pas cliqué sur menu/rejouer/annuler)
         if game_over and result_type is not None:
             animation_counter += 1
-            # on ne redessine l'animation qu'une frame sur 5 pour la ralentir encore
-            if animation_counter % 8 == 0:
+            # on ne redessine l'animation qu'une frame sur 5 pour la ralentir
+            if animation_counter % 5 == 0:
                 draw_end_animation(result_type)
 
         # boutons (toujours visibles)
         draw_button(btn_replay, "Rejouer", hover_replay)
         draw_button(btn_menu, "Menu", hover_menu)
+        draw_button(btn_undo, "Annuler", hover_undo)
 
         pygame.display.flip()
 
