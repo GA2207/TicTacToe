@@ -58,6 +58,7 @@ STYLES = {
     },
 }
 
+# thème sélectionné
 SELECTED_THEME = "modern"
 
 #   INIT PYGAME
@@ -69,6 +70,7 @@ Screen = pygame.display.set_mode((Width, Height))
 pygame.display.set_caption("Tic Tac Toe")
 Clock = pygame.time.Clock()
 
+# Variables de style
 style = None
 Background_color = None
 Line_color = None
@@ -89,6 +91,7 @@ CELL_SIZE = None
 
 
 def apply_style(theme_key: str):
+    """Applique le thème choisi."""
     global style, Background_color, Line_color, X_color, O_color, Line_width
     global Button_bg, Button_hover, Button_border, Message_color
     global GRID_MARGIN, Font, Info_Font
@@ -110,12 +113,14 @@ def apply_style(theme_key: str):
     Font = pygame.font.SysFont(style["font_main"], style["font_main_size"])
     Info_Font = pygame.font.SysFont(style["font_info"], style["font_info_size"])
 
+    # grille décalée vers le bas pour laisser la place aux boutons
     GRID_LEFT = GRID_MARGIN
-    GRID_TOP = GRID_MARGIN + 40  # décale la grille vers le bas car boutons en haut
+    GRID_TOP = GRID_MARGIN + 40
     GRID_SIZE = Width - 2 * GRID_MARGIN
     CELL_SIZE = GRID_SIZE // 3
 
 
+# appliquer le thème par défaut
 apply_style(SELECTED_THEME)
 
 #   LOGIQUE JEU
@@ -133,8 +138,7 @@ WIN_LINES = [
 
 
 def is_winner(board, sign):
-    for line in WIN_LINES:
-        i, j, k = line
+    for i, j, k in WIN_LINES:
         if board[i] == sign and board[j] == sign and board[k] == sign:
             return True
     return False
@@ -187,6 +191,7 @@ def computer(board, current_player):
         return random.choice(empty_cells)
 
     if AI_level == "Intermédiaire":
+        # essaie de gagner
         for i in empty_cells:
             board[i] = ai_sign
             if is_winner(board, ai_sign):
@@ -194,6 +199,7 @@ def computer(board, current_player):
                 return i
             board[i] = " "
 
+        # bloque l'adversaire
         for i in empty_cells:
             board[i] = human_sign
             if is_winner(board, human_sign):
@@ -204,6 +210,7 @@ def computer(board, current_player):
         return random.choice(empty_cells)
 
     if AI_level == "Expert":
+        # parfois joue "humain" (erreurs)
         if random.random() < 0.4:
             for i in empty_cells:
                 board[i] = ai_sign
@@ -278,7 +285,7 @@ def display_board(board, message=""):
             rect = text.get_rect(center=(cx, cy))
             Screen.blit(text, rect)
 
-    # MESSAGE EN BAS (ne touche plus la grille)
+    # message en bas
     if message:
         info_surface = Info_Font.render(message, True, Message_color)
         info_rect = info_surface.get_rect(center=(Width // 2, Height - 20))
@@ -294,7 +301,6 @@ def mouse_click(pos):
 
     col = (x - GRID_LEFT) // CELL_SIZE
     row = (y - GRID_TOP) // CELL_SIZE
-
     return row * 3 + col
 
 
@@ -312,23 +318,91 @@ def draw_button(rect, text, highlighted=False):
     Screen.blit(label, label_rect)
 
 
-#   MENU (inchangé)
+#   ANIMATIONS DE FIN
+
+def draw_end_animation(result_type):
+    """
+    Animation différente selon :
+    - SELECTED_THEME : modern / retro / dark
+    - result_type : "win" ou "draw"
+    Toutes les formes traversent la fenêtre d'un bout à l'autre.
+    """
+    # Thème moderne : projecteurs / faisceaux de lumière
+    if SELECTED_THEME == "modern":
+        if result_type == "win":
+            # Gros faisceaux verticaux du haut jusqu'en bas
+            for _ in range(4):
+                x = random.randint(-20, Width)
+                beam_width = random.randint(25, 45)
+                color = random.choice([Line_color, Message_color])
+                # rectangle qui couvre toute la hauteur
+                pygame.draw.rect(Screen, color, (x, 0, beam_width, Height), width=1)
+        else:  # match nul
+            # Faisceaux diagonaux du haut jusqu'en bas
+            for _ in range(3):
+                x1 = random.randint(0, Width)
+                x2 = random.randint(0, Width)
+                color = Line_color
+                pygame.draw.line(Screen, color, (x1, 0), (x2, Height), 2)
+
+    # Thème retro : colonnes / scanlines sur toute la hauteur/largeur
+    elif SELECTED_THEME == "retro":
+        if result_type == "win":
+            # Colonnes verticales sur toute la hauteur de la fenêtre
+            for _ in range(6):
+                x = random.randint(0, Width)
+                col_width = random.randint(3, 6)
+                color = random.choice([X_color, O_color, Line_color])
+                pygame.draw.rect(Screen, color, (x, 0, col_width, Height), width=1)
+        else:  # match nul
+            # Lignes horizontales qui traversent tout l'écran
+            for _ in range(5):
+                y = random.randint(0, Height)
+                pygame.draw.line(Screen, Line_color, (0, y), (Width, y), 1)
+
+    # Thème dark : lasers et cercles qui couvrent toute la fenêtre
+    elif SELECTED_THEME == "dark":
+        if result_type == "win":
+            # Lasers partant du bas de la fenêtre jusqu'en haut
+            for _ in range(6):
+                x1 = random.randint(0, Width)
+                y1 = Height
+                x2 = random.randint(0, Width)
+                y2 = 0
+                color = random.choice([X_color, O_color])
+                pygame.draw.line(Screen, color, (x1, y1), (x2, y2), 2)
+        else:  # match nul
+            # Cercles concentriques qui atteignent les bords de la fenêtre
+            center = (Width // 2, Height // 2)
+            max_radius = min(Width, Height) // 2
+            for r in range(10, max_radius, 20):
+                color = random.choice([Line_color, O_color, X_color])
+                pygame.draw.circle(Screen, color, center, r, 1)
+
+
+
+#   MENU
 
 def menu_pygame():
     global AI_level, SELECTED_THEME
+
     mode = None
     step = "theme"
     running = True
 
+    # Boutons thème
     btn_theme1 = pygame.Rect(50, 90, 200, 40)
     btn_theme2 = pygame.Rect(50, 140, 200, 40)
     btn_theme3 = pygame.Rect(50, 190, 200, 40)
 
+    # Bouton retour
     btn_back = pygame.Rect(50, 260, 200, 30)
 
+    # Boutons mode
     btn_pvp = pygame.Rect(50, 120, 200, 45)
     btn_vs_ai = pygame.Rect(50, 180, 200, 45)
 
+    # Boutons difficulté
     btn_diff1 = pygame.Rect(50, 90, 200, 35)
     btn_diff2 = pygame.Rect(50, 135, 200, 35)
     btn_diff3 = pygame.Rect(50, 180, 200, 35)
@@ -337,6 +411,7 @@ def menu_pygame():
     while running:
         Clock.tick(60)
         Screen.fill(Background_color)
+
         mouse_pos = pygame.mouse.get_pos()
 
         for event in pygame.event.get():
@@ -347,6 +422,7 @@ def menu_pygame():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
 
+                # Étape 1 : theme
                 if step == "theme":
                     if btn_theme1.collidepoint(mx, my):
                         SELECTED_THEME = "modern"
@@ -363,6 +439,7 @@ def menu_pygame():
                         apply_style("dark")
                         step = "mode"
 
+                # Étape 2 : mode
                 elif step == "mode":
                     if btn_back.collidepoint(mx, my):
                         step = "theme"
@@ -376,6 +453,7 @@ def menu_pygame():
                         mode = 2
                         step = "difficulty"
 
+                # Étape 3 : difficulté
                 elif step == "difficulty":
                     if btn_back.collidepoint(mx, my):
                         step = "theme"
@@ -393,6 +471,7 @@ def menu_pygame():
                         AI_level = "Imbattable"
                         return mode, AI_level
 
+        # Affichage
         title = Info_Font.render(f"Tic Tac Toe - {style['name']}", True, Message_color)
         title_rect = title.get_rect(center=(Width // 2, 40))
         Screen.blit(title, title_rect)
@@ -442,9 +521,13 @@ def loop_pygame(board, mode):
     message = f"Tour du joueur X ({style['name']})"
     running = True
 
-    # BOUTONS EN HAUT -------------
+    # boutons en haut
     btn_replay = pygame.Rect(30, 5, 110, 30)
     btn_menu = pygame.Rect(160, 5, 110, 30)
+
+    # état pour l'animation de fin
+    result_type = None  # "win" ou "draw"
+    animation_counter = 0  # pour ralentir l'animation
 
     while running:
         Clock.tick(60)
@@ -458,9 +541,11 @@ def loop_pygame(board, mode):
                 if is_winner(board, current_player):
                     message = f"JOUEUR {current_player} A GAGNÉ !!!"
                     game_over = True
+                    result_type = "win"
                 elif board_full(board):
                     message = "MATCH NUL !!!"
                     game_over = True
+                    result_type = "draw"
                 else:
                     current_player = "X"
                     message = "Tour du joueur X"
@@ -491,9 +576,11 @@ def loop_pygame(board, mode):
                             if is_winner(board, current_player):
                                 message = f"JOUEUR {current_player} A GAGNÉ !!!"
                                 game_over = True
+                                result_type = "win"
                             elif board_full(board):
                                 message = "MATCH NUL !!!"
                                 game_over = True
+                                result_type = "draw"
                             else:
                                 if mode == 1:
                                     current_player = "O" if current_player == "X" else "X"
@@ -502,18 +589,26 @@ def loop_pygame(board, mode):
                                     current_player = "O"
                                     message = "L'ordinateur réfléchit ..."
 
+        # affichage de la grille + message
         display_board(board, message)
 
-        if game_over:
-            draw_button(btn_replay, "Rejouer", hover_replay)
-            draw_button(btn_menu, "Menu", hover_menu)
+        # animation de fin (en continu tant qu'on n'a pas cliqué)
+        if game_over and result_type is not None:
+            animation_counter += 1
+            # on ne redessine l'animation qu'une frame sur 5 pour la ralentir encore
+            if animation_counter % 8 == 0:
+                draw_end_animation(result_type)
+
+        # boutons (toujours visibles)
+        draw_button(btn_replay, "Rejouer", hover_replay)
+        draw_button(btn_menu, "Menu", hover_menu)
 
         pygame.display.flip()
 
     return None
 
 
-#   LANCEMENT
+#   LANCEMENT DU JEU
 
 def game():
     running = True
