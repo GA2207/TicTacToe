@@ -20,7 +20,7 @@ STYLES = {
         "font_info_size": 24,
         "grid_margin": 30,
     },
-    
+
     "retro": {
         "name": "Rétro",
         "background": (15, 15, 15),
@@ -58,20 +58,16 @@ STYLES = {
     },
 }
 
-# thème par défaut (sera remplacé par le choix joueur)
 SELECTED_THEME = "modern"
 
 #   INIT PYGAME
-
 AI_level = "Débutant"
 
-Width, Height = 300, 340  # un peu plus haut pour les boutons
+Width, Height = 300, 340
 pygame.init()
 Screen = pygame.display.set_mode((Width, Height))
 pygame.display.set_caption("Tic Tac Toe")
 Clock = pygame.time.Clock()
-
-# Variables de style globales (remplies par apply_style)
 
 style = None
 Background_color = None
@@ -93,7 +89,6 @@ CELL_SIZE = None
 
 
 def apply_style(theme_key: str):
-    """Applique un thème et met à jour toutes les variables globales de style."""
     global style, Background_color, Line_color, X_color, O_color, Line_width
     global Button_bg, Button_hover, Button_border, Message_color
     global GRID_MARGIN, Font, Info_Font
@@ -116,12 +111,11 @@ def apply_style(theme_key: str):
     Info_Font = pygame.font.SysFont(style["font_info"], style["font_info_size"])
 
     GRID_LEFT = GRID_MARGIN
-    GRID_TOP = GRID_MARGIN
+    GRID_TOP = GRID_MARGIN + 40  # décale la grille vers le bas car boutons en haut
     GRID_SIZE = Width - 2 * GRID_MARGIN
     CELL_SIZE = GRID_SIZE // 3
 
 
-# appliquer le thème par défaut au démarrage
 apply_style(SELECTED_THEME)
 
 #   LOGIQUE JEU
@@ -166,9 +160,7 @@ def minimax(board, depth, is_maximizing, ai_sign, human_sign, max_depth=None):
         for i in range(9):
             if board[i] == " ":
                 board[i] = ai_sign
-                score = minimax(
-                    board, depth + 1, False, ai_sign, human_sign, max_depth
-                )
+                score = minimax(board, depth + 1, False, ai_sign, human_sign, max_depth)
                 board[i] = " "
                 best_score = max(best_score, score)
         return best_score
@@ -177,9 +169,7 @@ def minimax(board, depth, is_maximizing, ai_sign, human_sign, max_depth=None):
         for i in range(9):
             if board[i] == " ":
                 board[i] = human_sign
-                score = minimax(
-                    board, depth + 1, True, ai_sign, human_sign, max_depth
-                )
+                score = minimax(board, depth + 1, True, ai_sign, human_sign, max_depth)
                 board[i] = " "
                 best_score = min(best_score, score)
         return best_score
@@ -271,15 +261,11 @@ def display_board(board, message=""):
     # Grille
     for i in range(1, 3):
         x = GRID_LEFT + i * CELL_SIZE
-        pygame.draw.line(
-            Screen, Line_color, (x, GRID_TOP), (x, GRID_TOP + GRID_SIZE), Line_width
-        )
+        pygame.draw.line(Screen, Line_color, (x, GRID_TOP), (x, GRID_TOP + GRID_SIZE), Line_width)
         y = GRID_TOP + i * CELL_SIZE
-        pygame.draw.line(
-            Screen, Line_color, (GRID_LEFT, y), (GRID_LEFT + GRID_SIZE, y), Line_width
-        )
+        pygame.draw.line(Screen, Line_color, (GRID_LEFT, y), (GRID_LEFT + GRID_SIZE, y), Line_width)
 
-    # X ou O
+    # X / O
     for i in range(9):
         sign = board[i]
         if sign != " ":
@@ -288,17 +274,14 @@ def display_board(board, message=""):
             cx = GRID_LEFT + col * CELL_SIZE + CELL_SIZE // 2
             cy = GRID_TOP + row * CELL_SIZE + CELL_SIZE // 2
 
-            if sign == "X":
-                text = Font.render("X", True, X_color)
-            else:
-                text = Font.render("O", True, O_color)
-
+            text = Font.render(sign, True, X_color if sign == "X" else O_color)
             rect = text.get_rect(center=(cx, cy))
             Screen.blit(text, rect)
 
+    # MESSAGE EN BAS (ne touche plus la grille)
     if message:
         info_surface = Info_Font.render(message, True, Message_color)
-        info_rect = info_surface.get_rect(center=(Width // 2, Height - 70))
+        info_rect = info_surface.get_rect(center=(Width // 2, Height - 20))
         Screen.blit(info_surface, info_rect)
 
 
@@ -312,17 +295,13 @@ def mouse_click(pos):
     col = (x - GRID_LEFT) // CELL_SIZE
     row = (y - GRID_TOP) // CELL_SIZE
 
-    if col < 0 or col > 2 or row < 0 or row > 2:
-        return None
-
     return row * 3 + col
 
 
 def draw_button(rect, text, highlighted=False):
-    # petite animation : zoom léger si survol
     rect_to_draw = rect.copy()
     if highlighted:
-        rect_to_draw.inflate_ip(6, 4)  # un peu plus grand
+        rect_to_draw.inflate_ip(6, 4)
 
     bg = Button_hover if highlighted else Button_bg
     pygame.draw.rect(Screen, bg, rect_to_draw, border_radius=10)
@@ -333,28 +312,23 @@ def draw_button(rect, text, highlighted=False):
     Screen.blit(label, label_rect)
 
 
-#   MENU
+#   MENU (inchangé)
 
 def menu_pygame():
     global AI_level, SELECTED_THEME
-
     mode = None
     step = "theme"
     running = True
 
-    # Boutons thème
     btn_theme1 = pygame.Rect(50, 90, 200, 40)
     btn_theme2 = pygame.Rect(50, 140, 200, 40)
     btn_theme3 = pygame.Rect(50, 190, 200, 40)
 
-    # Bouton retour (affiché pour mode & difficulté)
     btn_back = pygame.Rect(50, 260, 200, 30)
 
-    # Boutons mode
     btn_pvp = pygame.Rect(50, 120, 200, 45)
     btn_vs_ai = pygame.Rect(50, 180, 200, 45)
 
-    # Boutons difficulté
     btn_diff1 = pygame.Rect(50, 90, 200, 35)
     btn_diff2 = pygame.Rect(50, 135, 200, 35)
     btn_diff3 = pygame.Rect(50, 180, 200, 35)
@@ -363,7 +337,6 @@ def menu_pygame():
     while running:
         Clock.tick(60)
         Screen.fill(Background_color)
-
         mouse_pos = pygame.mouse.get_pos()
 
         for event in pygame.event.get():
@@ -374,7 +347,6 @@ def menu_pygame():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mx, my = event.pos
 
-                # ÉTAPE 1 : THEME
                 if step == "theme":
                     if btn_theme1.collidepoint(mx, my):
                         SELECTED_THEME = "modern"
@@ -391,10 +363,8 @@ def menu_pygame():
                         apply_style("dark")
                         step = "mode"
 
-                # ÉTAPE 2 : MODE
                 elif step == "mode":
                     if btn_back.collidepoint(mx, my):
-                        # Retour au choix du thème
                         step = "theme"
 
                     elif btn_pvp.collidepoint(mx, my):
@@ -406,10 +376,8 @@ def menu_pygame():
                         mode = 2
                         step = "difficulty"
 
-                # ÉTAPE 3 : DIFFICULTÉ
                 elif step == "difficulty":
                     if btn_back.collidepoint(mx, my):
-                        # Retour au choix du thème (pour pouvoir le changer)
                         step = "theme"
 
                     elif btn_diff1.collidepoint(mx, my):
@@ -424,8 +392,6 @@ def menu_pygame():
                     elif btn_diff4.collidepoint(mx, my):
                         AI_level = "Imbattable"
                         return mode, AI_level
-
-        # ----------- AFFICHAGE -----------
 
         title = Info_Font.render(f"Tic Tac Toe - {style['name']}", True, Message_color)
         title_rect = title.get_rect(center=(Width // 2, 40))
@@ -476,8 +442,9 @@ def loop_pygame(board, mode):
     message = f"Tour du joueur X ({style['name']})"
     running = True
 
-    btn_replay = pygame.Rect(30, Height - 50, 110, 30)
-    btn_menu = pygame.Rect(160, Height - 50, 110, 30)
+    # BOUTONS EN HAUT -------------
+    btn_replay = pygame.Rect(30, 5, 110, 30)
+    btn_menu = pygame.Rect(160, 5, 110, 30)
 
     while running:
         Clock.tick(60)
@@ -546,7 +513,7 @@ def loop_pygame(board, mode):
     return None
 
 
-#   LANCEMENT DU JEU
+#   LANCEMENT
 
 def game():
     running = True
