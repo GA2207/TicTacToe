@@ -24,7 +24,7 @@ https://github.com/GA2207/TicTacToe
 - **Python 3.8 ou plus**
 
 Vérifier la version installée :
-```bash
+
 python --version
 
 
